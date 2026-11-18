@@ -134,3 +134,7 @@ The scanner accepts a limited frontmatter subset and skips unsupported content a
 4. Start a separate session named `optimizer-smoke-b` with the same mod command. Trigger the Bash tip, press **Snooze 30 min**, exit, and launch `claude --plugin-dir "$optimizer_checkout/mod" --resume optimizer-smoke-b`. Confirm another eligible Bash result remains quiet during that interval. After 30 minutes, run a fresh eligible tool call and confirm the tip can appear.
 5. Press **Snooze until new session**, exit and resume `optimizer-smoke-b`, and confirm an eligible Bash result stays quiet. Start a fresh session, trigger the tip, and press **Mute this rule**. Check that a different fresh session still suppresses it. Press **Enable all tips** and confirm another eligible result can show it.
 6. Record CLI version, terminal, session names, and pass/fail for each step. Record only the results and synthetic fixture details. If the band appears but a tip is missing, rerun with `--debug` and look for module load or skipped-hook messages. The test host checks state transitions, but they do not confirm the signed-in terminal path.
+
+## Developer alpha
+
+Use the [macOS alpha smoke test](docs/alpha-smoke-test.md) to try the native companion against synthetic fixtures and record signed-in results.

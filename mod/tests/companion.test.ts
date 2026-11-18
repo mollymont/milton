@@ -67,3 +67,44 @@ test('stored snoozes distinguish a resumed session from a fresh session', async 
   expect([...preferences.values()]).toContainEqual({ suppressed: true });
   await ui.unmount();
 });
+
+for (const enabled of [false, true]) {
+  test(`diagnostics ${enabled ? 'emit only allowlisted metadata' : 'are off by default'}`, async ($, on) => {
+    const records: string[] = [];
+    const sentinel = 'PRIVATE_ALPHA_SENTINEL';
+    on('env.get', ($, event) => ({ value: event.name === 'MILTON_DIAGNOSTICS' && enabled ? '1' : undefined }));
+    on('ui.log', ($, event) => {
+      records.push(event.text);
+      return { value: undefined };
+    });
+    on('classic.PostToolUse', () => ({}));
+    on('store.get', () => ({ value: undefined }));
+    on('store.set', () => ({ deny: sentinel }));
+
+    const ui = await $.ui.mount(band);
+    const event = {
+      hook_event_name: 'PostToolUse', session_id: 'private-session-id',
+      transcript_path: '/private/fixture.jsonl', cwd: '/private/fixture',
+      tool_name: 'Bash', tool_input: { command: sentinel },
+      tool_use_id: 'private-tool-id', tool_response: { stdout: sentinel.repeat(2_000), stderr: '' },
+    } as const;
+    expect(await $.classic.PostToolUse(event)).toEqual({});
+    await ui.press({ key: 'optimizer-snooze' });
+
+    if (enabled) {
+      expect(records).toHaveLength(2);
+      const decoded = records.map(line => JSON.parse(line.replace(/^Milton diagnostic /, '')));
+      expect(decoded.map(record => record.event)).toEqual(['PostToolUse', 'feedback']);
+      expect(decoded.map(record => record.outcome)).toEqual(['queued', 'snoozed']);
+      expect(decoded.map(record => record.error)).toEqual([null, 'preference-write-failed']);
+      expect(decoded.map(record => record.detector)).toEqual(['oversized-shell-output', 'oversized-shell-output']);
+      expect(decoded[0].recommendationId).toBe(decoded[1].recommendationId);
+      expect(decoded.every(record => Number.isFinite(record.durationMs) && record.durationMs >= 0)).toBe(true);
+      expect(records.join('\n').includes(sentinel)).toBe(false);
+      expect(records.join('\n').includes('private-')).toBe(false);
+    } else {
+      expect(records).toHaveLength(0);
+    }
+    await ui.unmount();
+  });
+}
