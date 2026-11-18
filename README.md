@@ -138,3 +138,13 @@ The scanner accepts a limited frontmatter subset and skips unsupported content a
 ## Developer alpha
 
 Use the [macOS alpha smoke test](docs/alpha-smoke-test.md) to try the native companion against synthetic fixtures and record signed-in results.
+
+### Live validation status
+
+| Evidence | Status |
+| --- | --- |
+| Signed-in Claude Code 2.1.326 terminal | User observed the ready band and a visible oversized Bash recommendation from a real `PostToolUse` event. Its diagnostic reported 1 ms of observer time for that one event. |
+| Automated and native host tests | Cover the compact summary and Details toggle, dismissal across a simulated resume and expiry, timed and next-session snooze, rule mute, diagnostics disabled by default and redacted when on, and unchanged downstream hook output. |
+| Remaining signed-in checks | Polished band, keyboard and mouse feedback, on-disk preference persistence across exit and resume, model-facing message inspection, and realistic end-to-end notification/render overhead. |
+
+The native band defaults to a short suggestion with direct **Dismiss** and **Snooze 30 min** actions. **Details** shows the full explanation, rule mute, and next-session snooze. A dismissal remains in effect for ten minutes if you resume that same session. A fresh session may show the rule again. Developer diagnostics require `MILTON_DIAGNOSTICS=1` and use Claude Code's user-only UI log. The hook passes the original event through and the recommendation is drawn in the UI. Host checks and the documented log behavior are evidence for context isolation. A live outbound model request has not been inspected. [Claude Code UI logging](https://code.claude.com/docs/en/plugins/mods/api#show-something-without-starting-a-turn)

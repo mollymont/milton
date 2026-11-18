@@ -1,6 +1,6 @@
 # macOS developer alpha smoke test
 
-**Current status: live checks pending.** This runbook uses synthetic tool calls and a scratch copy. Run it from your regular macOS Terminal, using an existing signed-in Claude Code account and normal network configuration.
+**Current status: the earlier native band and one real Bash recommendation were observed in a signed-in terminal. The polished band and remaining interactions are pending.** This runbook uses synthetic tool calls and a scratch copy. Run it from your regular macOS Terminal, using an existing signed-in Claude Code account and normal network configuration.
 
 ## Diagnose startup
 
@@ -35,6 +35,8 @@ MILTON_DIAGNOSTICS=1 claude --plugin-dir "$checkout/mod"
 
 Use only the native mod for this run. Accept the workspace trust prompt only after confirming the directory is the synthetic scratch copy. Look for **Efficiency companion · ready** above the prompt and `efficiency-companion` in the active mods shown by `/plugin`.
 
+Use **Control+X**, release it, then press **Tab** to focus the band. Move with **Tab** or **← / →**, press **Enter** to activate a button, and use **Esc** to return to your draft. Open **Details** for full advice, rule mute, and next-session snooze. [Claude Code keyboard shortcuts](https://code.claude.com/docs/en/keybindings#above-prompt-actions)
+
 Start each detector in a fresh session using the same launch command. Wait for the prompt to return after each test. The two sequence detectors require the calls to happen consecutively in the same turn. Accept the ordinary tool permission prompts as needed.
 
 | Test | Paste this prompt | Expected |
@@ -48,21 +50,25 @@ If Claude changes the command or uses a different tool, retry in a fresh session
 
 ## Feedback, restart, and model context
 
-1. In a fresh session, rename it with `/rename milton-alpha-dismiss`, trigger the Bash tip, and press **Dismiss**. The band returns to ready. Repeat the Bash trigger within ten minutes and expect no repeat tip.
+1. In a fresh session, rename it with `/rename milton-alpha-dismiss`, trigger the Bash tip, and press **Dismiss**. The band returns to ready. Repeat the Bash trigger within ten minutes and expect no repeat tip. Exit and resume with `MILTON_DIAGNOSTICS=1 claude --plugin-dir "$checkout/mod" --resume milton-alpha-dismiss`, then repeat within the same ten-minute window and expect suppression. A fresh session remains eligible.
 2. In another fresh session, run `/rename milton-alpha-snooze`, trigger the tip, press **Snooze 30 min**, and exit with `/exit`. From the same fixture directory run:
    ```sh
    MILTON_DIAGNOSTICS=1 claude --plugin-dir "$checkout/mod" --resume milton-alpha-snooze
    ```
    Repeat the Bash trigger before 30 minutes and expect suppression. Repeat after expiry and expect the tip on a fresh matching result.
-3. Press **Snooze until new session**, exit, resume the same named session, and verify suppression. Open a new session and confirm the tip can appear there.
-4. In that new session, press **Mute this rule** on the Bash tip and exit. Open another fresh session and run the Bash fixture. Expect suppression. Press **Enable all tips** and run another Bash call. Expect the tip to return.
+3. Open **Details**, press **Snooze until new session**, exit, resume the same named session, and verify suppression. Open a new session and confirm the tip can appear there.
+4. In that new session, open **Details** and press **Mute this rule** on the Bash tip and exit. Open another fresh session and run the Bash fixture. Expect suppression. Press **Enable all tips** and run another Bash call. Expect the tip to return.
 5. Repeat the oversized Bash fixture with diagnostics omitted in a fresh session. Confirm the recommendation still appears, the original tool output is intact, no extra model turn starts, and no diagnostic lines appear. Keep all recommendation text out of your prompts. Inspect the synthetic session's local transcript if available and check that no recommendation text was added to model-facing message or tool-result rows. The expected reply of DONE is a visible check only. A transcript and the validated hook inventory can expose accidental injection, but they do not prove the contents of a captured outbound API request. Mark that stronger check unverified unless you have an approved way to inspect it.
 
 ## Diagnostics and troubleshooting
 
-`MILTON_DIAGNOSTICS=1` is opt-in for the process. Look for dim lines prefixed `Milton diagnostic` in the terminal. They contain event type, rule ID, a run-local recommendation ID, presentation or feedback outcome, elapsed handler time, and an optional fixed error code. `queued` means the coordinator selected a tip and requested a redraw. Verify painting visually. Duration covers observer and preference work before logging and excludes downstream callbacks and log delivery. A `preference-write-failed` code means the feedback took effect locally in memory and persistence needs investigation. Diagnostic rows use Claude Code's user-only log API. The surrounding transcript can contain ordinary session data, so share only copied diagnostic lines from the synthetic run. [Claude Code mod UI logging](https://code.claude.com/docs/en/plugins/mods/api#show-something-without-starting-a-turn)
+`MILTON_DIAGNOSTICS=1` is opt-in for the process. Look for dim lines prefixed `Milton diagnostic` in the terminal. They contain event type, rule ID, a run-local recommendation ID, presentation or feedback outcome, elapsed handler time, and an optional fixed error code. `queued` means the coordinator selected a tip and requested a redraw. Verify painting visually. For tool events, duration covers observer and preference work before logging. For `ui.render`, `tree-built` measures the first compact tree construction for a queued recommendation, with millisecond resolution. That sample is delivered on the next tool event, feedback action, or session exit. Neither measurement includes terminal paint, log delivery, downstream callbacks, or model time. A `preference-write-failed` code means the feedback took effect locally in memory and persistence needs investigation. Diagnostic rows use Claude Code's user-only log API. The surrounding transcript can contain ordinary session data, so share only copied diagnostic lines from the synthetic run. [Claude Code mod UI logging](https://code.claude.com/docs/en/plugins/mods/api#show-something-without-starting-a-turn)
 
 If the mod is missing, rerun `npm run prepare:plugins` from the checkout, confirm the absolute mod path and CLI version, then run `claude plugin validate "$checkout/mod"`. Check workspace trust and managed mod policy. If necessary, inspect the host debug log locally for module load and skipped-hook messages. Keep host debug logs out of public reports. [Claude Code mod troubleshooting](https://code.claude.com/docs/en/plugins/mods/troubleshoot)
+
+### Check overhead in a signed-in session
+
+Run a short representative task in a disposable project with the same model and effort twice, first with the native mod and diagnostics off, then with diagnostics enabled. Include ordinary Read and Bash calls and at least one eligible recommendation. Repeat enough to see whether lag is consistent. Keep the observed wall-clock interaction lag separate from the `PostToolUse` observer and `ui.render` tree-build samples. Compare the samples for matching and nonmatching events, and press **Details**, **Dismiss**, and **Snooze** while watching for visible lag or prompt input loss. A single 1 ms live observer sample from the original smoke test is a datapoint, with no evidence of paint time or typical latency. For end-to-end comparison use the same task once without the mod and record any reproducible delay. Record sample count, median, worst case, and terminal/CLI version.
 
 ## Alpha readiness checklist
 
