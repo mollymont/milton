@@ -1,0 +1,14 @@
+{
+  "name": "claude-optimizer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "npm run prepare:plugins && node --test test/*.test.mjs",
+    "test:integration": "npm run prepare:plugins && node --test test/claude.integration.mjs",
+    "prepare:plugins": "node scripts/prepare-plugins.mjs",
+    "audit": "node scripts/audit.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
